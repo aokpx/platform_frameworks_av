@@ -19,6 +19,7 @@
 #if CHROMIUM_AVAILABLE
 #include "include/chromium_http_stub.h"
 #endif
+#include "include/AVIExtractor.h"
 
 #include "include/AACExtractor.h"
 #include "include/DRMExtractor.h"
@@ -125,6 +126,7 @@ void DataSource::RegisterDefaultSniffers() {
     RegisterSniffer(SniffAAC);
     RegisterSniffer(SniffMPEG2PS);
     RegisterSniffer(SniffWVM);
+    RegisterSniffer(SniffAVI);
 #ifdef QCOM_HARDWARE
     RegisterSniffer(SniffExtendedExtractor);
 #endif
