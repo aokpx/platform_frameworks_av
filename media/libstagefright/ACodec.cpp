@@ -673,7 +673,8 @@ status_t ACodec::allocateOutputBuffersFromNativeWindow() {
 void ACodec::setNativeWindowColorFormat(OMX_COLOR_FORMATTYPE &eNativeColorFormat)
 {
     // In case of Samsung decoders, we set proper native color format for the Native Window
-    if (!strcasecmp(mComponentName.c_str(), "OMX.Exynos.AVC.Decoder")) {
+    if (!strcasecmp(mComponentName.c_str(), "OMX.SEC.AVC.Decoder")
+        || !strcasecmp(mComponentName.c_str(), "OMX.SEC.FP.AVC.Decoder")) {
         switch (eNativeColorFormat) {
             case OMX_COLOR_FormatYUV420SemiPlanar:
                 eNativeColorFormat = (OMX_COLOR_FORMATTYPE)HAL_PIXEL_FORMAT_YCbCr_420_SP;
@@ -816,6 +817,10 @@ status_t ACodec::setComponentRole(
             "audio_decoder.amrnb", "audio_encoder.amrnb" },
         { MEDIA_MIMETYPE_AUDIO_AMR_WB,
             "audio_decoder.amrwb", "audio_encoder.amrwb" },
+#ifdef QCOM_ENHANCED_AUDIO
+        { MEDIA_MIMETYPE_AUDIO_AMR_WB_PLUS,
+            "audio_decoder.amrwbplus", "audio_encoder.amrwbplus" },
+#endif
         { MEDIA_MIMETYPE_AUDIO_AAC,
             "audio_decoder.aac", "audio_encoder.aac" },
         { MEDIA_MIMETYPE_AUDIO_VORBIS,

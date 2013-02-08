@@ -83,8 +83,14 @@ status_t CameraClient::initialize(camera_module_t *module) {
             (void *)mCameraId);
 
     // Enable zoom, error, focus, and metadata messages by default
-    enableMsgType(CAMERA_MSG_ERROR | CAMERA_MSG_ZOOM | CAMERA_MSG_FOCUS |
-                  CAMERA_MSG_PREVIEW_METADATA | CAMERA_MSG_FOCUS_MOVE);
+    enableMsgType(CAMERA_MSG_ERROR | CAMERA_MSG_ZOOM | CAMERA_MSG_FOCUS
+#ifndef QCOM_HARDWARE
+                  | CAMERA_MSG_PREVIEW_METADATA 
+#endif
+#ifndef OMAP_ICS_CAMERA
+                  | CAMERA_MSG_FOCUS_MOVE
+#endif
+                 );
 
     LOG1("CameraClient::initialize X (pid %d, id %d)", callingPid, mCameraId);
     return OK;
@@ -244,9 +250,14 @@ void CameraClient::disconnect() {
 
     // Release the held ANativeWindow resources.
     if (mPreviewWindow != 0) {
+#ifdef QCOM_HARDWARE
+        mHardware->setPreviewWindow(0);
+#endif
         disconnectWindow(mPreviewWindow);
         mPreviewWindow = 0;
+#ifndef QCOM_HARDWARE
         mHardware->setPreviewWindow(mPreviewWindow);
+#endif
     }
     mHardware.clear();
 
@@ -285,6 +296,10 @@ status_t CameraClient::setPreviewWindow(const sp<IBinder>& binder,
             native_window_set_buffers_transform(window.get(), mOrientation);
             result = mHardware->setPreviewWindow(window);
         }
+#ifdef QCOM_HARDWARE
+    } else {
+        result = mHardware->setPreviewWindow(window);
+#endif
     }
 
     if (result == NO_ERROR) {
@@ -344,6 +359,9 @@ void CameraClient::setPreviewCallbackFlag(int callback_flag) {
 // start preview mode
 status_t CameraClient::startPreview() {
     LOG1("startPreview (pid %d)", getCallingPid());
+#ifdef QCOM_HARDWARE
+    enableMsgType(CAMERA_MSG_PREVIEW_METADATA);
+#endif
     return startCameraMode(CAMERA_PREVIEW_MODE);
 }
 
@@ -393,6 +411,11 @@ status_t CameraClient::startPreviewMode() {
         native_window_set_buffers_transform(mPreviewWindow.get(),
                 mOrientation);
     }
+
+#if defined(OMAP_ICS_CAMERA) || defined(OMAP_ENHANCEMENT_BURST_CAPTURE)
+    disableMsgType(CAMERA_MSG_COMPRESSED_BURST_IMAGE);
+#endif
+
     mHardware->setPreviewWindow(mPreviewWindow);
     result = mHardware->startPreview();
 
@@ -429,9 +452,22 @@ status_t CameraClient::startRecordingMode() {
 // stop preview mode
 void CameraClient::stopPreview() {
     LOG1("stopPreview (pid %d)", getCallingPid());
+#ifdef QCOM_HARDWARE
+    disableMsgType(CAMERA_MSG_PREVIEW_METADATA);
+#endif
     Mutex::Autolock lock(mLock);
     if (checkPidAndHardware() != NO_ERROR) return;
 
+#ifdef OMAP_ENHANCEMENT
+    // According to framework documentation, preview needs
+    // to be started for image capture. This will make sure
+    // that image capture related messages get disabled if
+    // not done already in their respective handlers.
+    // If these messages come when in the midddle of
+    // stopping preview we will deadlock the system in
+    // lockIfMessageWanted().
+    disableMsgType(CAMERA_MSG_POSTVIEW_FRAME);
+#endif
 
     disableMsgType(CAMERA_MSG_PREVIEW_FRAME);
     mHardware->stopPreview();
@@ -527,8 +563,18 @@ status_t CameraClient::takePicture(int msgType) {
                            CAMERA_MSG_POSTVIEW_FRAME |
                            CAMERA_MSG_RAW_IMAGE |
                            CAMERA_MSG_RAW_IMAGE_NOTIFY |
+#if defined(OMAP_ICS_CAMERA) || defined(OMAP_ENHANCEMENT_BURST_CAPTURE)
+                           CAMERA_MSG_RAW_BURST |
+#endif
                            CAMERA_MSG_COMPRESSED_IMAGE);
 
+#if defined(OMAP_ICS_CAMERA) || defined(OMAP_ENHANCEMENT_BURST_CAPTURE)
+    picMsgType |= CAMERA_MSG_COMPRESSED_BURST_IMAGE;
+#endif
+
+#ifdef QCOM_HARDWARE
+    disableMsgType(CAMERA_MSG_PREVIEW_METADATA);
+#endif
     enableMsgType(picMsgType);
 
     return mHardware->takePicture();
@@ -746,6 +792,11 @@ void CameraClient::dataCallback(int32_t msgType,
         case CAMERA_MSG_COMPRESSED_IMAGE:
             client->handleCompressedPicture(dataPtr);
             break;
+#if defined(OMAP_ICS_CAMERA) || defined(OMAP_ENHANCEMENT_BURST_CAPTURE)
+        case CAMERA_MSG_COMPRESSED_BURST_IMAGE:
+            client->handleCompressedBurstPicture(dataPtr);
+            break;
+#endif
         default:
             client->handleGenericData(msgType, dataPtr, metadata);
             break;
@@ -875,6 +926,20 @@ void CameraClient::handleCompressedPicture(const sp<IMemory>& mem) {
     }
 }
 
+#if defined(OMAP_ICS_CAMERA) || defined(OMAP_ENHANCEMENT_BURST_CAPTURE)
+// burst picture callback - compressed picture ready
+void CameraClient::handleCompressedBurstPicture(const sp<IMemory>& mem) {
+    // Don't disable this message type yet. In this mode takePicture() will
+    // get called only once. When burst finishes this message will get automatically
+    // disabled in the respective call for restarting the preview.
+
+    sp<ICameraClient> c = mCameraClient;
+    mLock.unlock();
+    if (c != 0) {
+        c->dataCallback(CAMERA_MSG_COMPRESSED_IMAGE, mem, NULL);
+    }
+}
+#endif
 
 void CameraClient::handleGenericNotify(int32_t msgType,
     int32_t ext1, int32_t ext2) {
