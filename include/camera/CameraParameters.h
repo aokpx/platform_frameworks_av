@@ -641,6 +641,10 @@ public:
     // stream and record stabilized videos.
     static const char KEY_VIDEO_STABILIZATION_SUPPORTED[];
 
+    // Supported modes for special effects with light.
+    // Example values: "lowlight,hdr".
+    static const char KEY_LIGHTFX[];
+
 #ifdef HAVE_ISO
     static const char KEY_SUPPORTED_ISO_MODES[];
     static const char KEY_ISO_MODE[];
@@ -894,6 +898,12 @@ public:
     // To stop continuous focus, applications should change the focus mode to
     // other modes.
     static const char FOCUS_MODE_CONTINUOUS_PICTURE[];
+
+    // Values for light special effects
+    // Low-light enhancement mode
+    static const char LIGHTFX_LOWLIGHT[];
+    // High-dynamic range mode
+    static const char LIGHTFX_HDR[];
 
 #ifdef QCOM_HARDWARE
 #ifdef QCOM_LEGACY_CAM_PARAMS

@@ -163,6 +163,7 @@ const char CameraParameters::KEY_VIDEO_SNAPSHOT_SUPPORTED[] = "video-snapshot-su
 const char CameraParameters::KEY_FULL_VIDEO_SNAP_SUPPORTED[] = "full-video-snap-supported";
 const char CameraParameters::KEY_VIDEO_STABILIZATION[] = "video-stabilization";
 const char CameraParameters::KEY_VIDEO_STABILIZATION_SUPPORTED[] = "video-stabilization-supported";
+const char CameraParameters::KEY_LIGHTFX[] = "light-fx";
 #ifdef QCOM_HARDWARE
 const char CameraParameters::KEY_ZSL[] = "zsl";
 const char CameraParameters::KEY_SUPPORTED_ZSL_MODES[] = "zsl-values";
@@ -508,6 +509,10 @@ void CameraParameters::setOrientation(int orientation)
 }
 #endif
 
+
+// Values for light fx settings
+const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
+const char CameraParameters::LIGHTFX_HDR[] = "high-dynamic-range";
 
 CameraParameters::CameraParameters()
                 : mMap()
