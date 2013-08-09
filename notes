@@ -1,0 +1,11 @@
+include/camera/Camera.h:
+
+	Refactored, missing change from ba6fc8dbd081c9e1ede1fdd1c3b91c9b94ab5047
+
+include/media/IAudioFlinger.h:
+
+	IAudioFlinger::setFmVolume removed in CM
+
+include/media/stagefright/ACodec.h:
+
+	ACodec::mFlushingOUtputState removed in CM

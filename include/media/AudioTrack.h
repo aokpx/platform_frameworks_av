@@ -616,6 +616,7 @@ protected:
     //      2. mCblk->lock
     // It is OK to lock only mCblk->lock.
     mutable Mutex           mLock;
+    status_t                mRestoreStatus;
 #ifdef QCOM_HARDWARE
     void*                   mObserver;
 #endif
