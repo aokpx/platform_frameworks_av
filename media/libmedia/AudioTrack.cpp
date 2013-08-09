@@ -109,7 +109,7 @@ AudioTrack::AudioTrack()
       mIsTimed(false),
       mPreviousPriority(ANDROID_PRIORITY_NORMAL),
       mPreviousSchedulingGroup(SP_DEFAULT),
-      mProyy(NULL)
+      mProxy(NULL)
 #ifdef QCOM_HARDWARE
       ,mAudioFlinger(NULL),
       mObserver(NULL)
@@ -1633,7 +1633,7 @@ status_t AudioTrack::dump(int fd, const Vector<String16>& args) const
             mVolume[0], mVolume[1]);
     result.append(buffer);
     snprintf(buffer, 255, "  format(%d), channel count(%d), frame count(%d)\n", mFormat,
-            mChannelCount, (mCblk == 0) ? 0 : frameCount);
+            mChannelCount, (mCblk == 0) ? 0 : mFrameCount);
     result.append(buffer);
     snprintf(buffer, 255, "  sample rate(%u), status(%d)\n", mSampleRate, mStatus);
     result.append(buffer);
